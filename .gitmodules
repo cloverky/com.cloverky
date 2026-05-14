@@ -1,0 +1,9 @@
+[submodule "backend"]
+	path = backend
+	url = https://github.com/cloverky/com.cloverky.api.git
+[submodule "frontend"]
+	path = frontend
+	url = https://github.com/cloverky/com.cloverky.www.git
+[submodule "docs"]
+	path = docs
+	url = https://github.com/cloverky/com.cloverky.docs.git
