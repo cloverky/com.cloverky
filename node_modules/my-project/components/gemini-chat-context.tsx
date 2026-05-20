@@ -2,11 +2,14 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
   useRef,
   useState,
+  type Dispatch,
+  type SetStateAction,
 } from "react";
 
 export type ChatRole = "user" | "assistant";
@@ -33,16 +36,30 @@ export function scrollChatLists(
   });
 }
 
+type ChatState = {
+  messages: ChatMessage[];
+  input: string;
+  loading: boolean;
+  error: string | null;
+};
+
+const INITIAL_CHAT: ChatState = {
+  messages: [],
+  input: "",
+  loading: false,
+  error: null,
+};
+
 type GeminiChatContextValue = {
   messages: ChatMessage[];
-  setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>;
+  setMessages: Dispatch<SetStateAction<ChatMessage[]>>;
   messagesRef: React.MutableRefObject<ChatMessage[]>;
   input: string;
   setInput: (v: string) => void;
   loading: boolean;
-  setLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  setLoading: Dispatch<SetStateAction<boolean>>;
   error: string | null;
-  setError: React.Dispatch<React.SetStateAction<string | null>>;
+  setError: Dispatch<SetStateAction<string | null>>;
   dialogListRef: React.MutableRefObject<HTMLDivElement | null>;
   floatingListRef: React.MutableRefObject<HTMLDivElement | null>;
 };
@@ -50,33 +67,64 @@ type GeminiChatContextValue = {
 const GeminiChatContext = createContext<GeminiChatContextValue | null>(null);
 
 export function GeminiChatProvider({ children }: { children: React.ReactNode }) {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [chat, setChat] = useState<ChatState>(INITIAL_CHAT);
   const messagesRef = useRef<ChatMessage[]>([]);
-  const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const dialogListRef = useRef<HTMLDivElement | null>(null);
   const floatingListRef = useRef<HTMLDivElement | null>(null);
 
+  const patchChat = useCallback(
+    (patch: Partial<ChatState>) => setChat((prev) => ({ ...prev, ...patch })),
+    [],
+  );
+
+  const setMessages = useCallback((action: SetStateAction<ChatMessage[]>) => {
+    setChat((prev) => ({
+      ...prev,
+      messages: typeof action === "function" ? action(prev.messages) : action,
+    }));
+  }, []);
+
+  const setInput = useCallback((v: string) => patchChat({ input: v }), [patchChat]);
+
+  const setLoading = useCallback(
+    (action: SetStateAction<boolean>) => {
+      setChat((prev) => ({
+        ...prev,
+        loading: typeof action === "function" ? action(prev.loading) : action,
+      }));
+    },
+    [],
+  );
+
+  const setError = useCallback(
+    (action: SetStateAction<string | null>) => {
+      setChat((prev) => ({
+        ...prev,
+        error: typeof action === "function" ? action(prev.error) : action,
+      }));
+    },
+    [],
+  );
+
   useEffect(() => {
-    messagesRef.current = messages;
-  }, [messages]);
+    messagesRef.current = chat.messages;
+  }, [chat.messages]);
 
   const value = useMemo(
     () => ({
-      messages,
+      messages: chat.messages,
       setMessages,
       messagesRef,
-      input,
+      input: chat.input,
       setInput,
-      loading,
+      loading: chat.loading,
       setLoading,
-      error,
+      error: chat.error,
       setError,
       dialogListRef,
       floatingListRef,
     }),
-    [messages, input, loading, error],
+    [chat.messages, chat.input, chat.loading, chat.error, setMessages, setInput, setLoading, setError],
   );
 
   return <GeminiChatContext.Provider value={value}>{children}</GeminiChatContext.Provider>;

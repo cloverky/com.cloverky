@@ -1,6 +1,7 @@
 "use client";
 
-import { Loader2, SendHorizontal, Sparkles } from "lucide-react";
+import { Loader2, SendHorizontal } from "lucide-react";
+import { CloverIcon } from "@/components/clover-icon";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useGeminiSend } from "@/components/gemini-chat-dialog";
@@ -32,7 +33,7 @@ export function GeminiFloatingChat() {
         />
         <div className="relative flex items-center gap-3">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent/15 text-accent ring-1 ring-accent/20">
-            <Sparkles className="h-4 w-4" strokeWidth={2} aria-hidden />
+            <CloverIcon className="h-4 w-4" strokeWidth={2} />
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-base font-semibold tracking-tight text-foreground">Gemini</p>

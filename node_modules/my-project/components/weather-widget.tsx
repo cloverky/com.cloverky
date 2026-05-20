@@ -29,27 +29,36 @@ function weatherIconForCode(icon: string): LucideIcon {
   return Cloud;
 }
 
+type WeatherState = {
+  weather: WeatherData | null;
+  loading: boolean;
+  error: boolean;
+};
+
+const INITIAL_WEATHER: WeatherState = {
+  weather: null,
+  loading: true,
+  error: false,
+};
+
 export function WeatherWidget() {
-  const [weather, setWeather] = useState<WeatherData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const [state, setState] = useState<WeatherState>(INITIAL_WEATHER);
+
+  const patchState = (patch: Partial<WeatherState>) =>
+    setState((prev) => ({ ...prev, ...patch }));
 
   useEffect(() => {
     let cancelled = false;
 
     async function load() {
-      setLoading(true);
-      setError(false);
+      patchState({ loading: true, error: false });
       try {
         const data = await fetchWeather("Seoul", "KR");
-        if (!cancelled) setWeather(data);
+        if (!cancelled) patchState({ weather: data });
       } catch {
-        if (!cancelled) {
-          setWeather(null);
-          setError(true);
-        }
+        if (!cancelled) patchState({ weather: null, error: true });
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) patchState({ loading: false });
       }
     }
 
@@ -59,7 +68,7 @@ export function WeatherWidget() {
     };
   }, []);
 
-  const Icon = weather ? weatherIconForCode(weather.icon) : null;
+  const Icon = state.weather ? weatherIconForCode(state.weather.icon) : null;
 
   return (
     <aside
@@ -70,16 +79,16 @@ export function WeatherWidget() {
       )}
       aria-label="서울 날씨"
     >
-      {loading && (
+      {state.loading && (
         <>
           <Loader2 className="h-3.5 w-3.5 animate-spin text-accent" aria-hidden />
           <span>날씨</span>
         </>
       )}
 
-      {!loading && error && <span className="text-destructive/80">날씨 불가</span>}
+      {!state.loading && state.error && <span className="text-destructive/80">날씨 불가</span>}
 
-      {!loading && weather && Icon && (
+      {!state.loading && state.weather && Icon && (
         <>
           <span
             className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted/90 ring-1 ring-border/50"
@@ -88,9 +97,9 @@ export function WeatherWidget() {
             <Icon className="h-4 w-4 text-accent" strokeWidth={2} />
           </span>
           <span className="font-medium text-foreground tabular-nums">
-            {Math.round(weather.temp_c)}°
+            {Math.round(state.weather.temp_c)}°
           </span>
-          <span className="text-foreground/80">{weather.description}</span>
+          <span className="text-foreground/80">{state.weather.description}</span>
           <span className="text-muted-foreground/80">· 서울</span>
         </>
       )}
