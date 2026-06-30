@@ -7,6 +7,8 @@ services:
       - "8000:8000"        # 내 컴퓨터의 8000포트 : 컨테이너의 8000포트 연결
     env_file:
       - ./clover/.env      # 기존에 사용하시던 .env 환경변수 파일 연동
+    environment:
+      - OLLAMA_HOST=http://host.docker.internal:11434
     depends_on:
       - pgvector
       - redis
